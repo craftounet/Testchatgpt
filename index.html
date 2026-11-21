@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>Mon espace d'interfaces</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1220;--panel:#151f31;--muted:#a8b3c7;--accent:#8bd3ff}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 0%,#243b59 0,transparent 38%),var(--bg);color:#f5f7fb;font:16px/1.5 system-ui,sans-serif}
+    main{width:min(960px,92vw);margin:0 auto;padding:64px 0}header{margin-bottom:32px}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.14em;font-size:.75rem;font-weight:700}
+    h1{font-size:clamp(2rem,6vw,4rem);line-height:1.05;margin:.5rem 0 1rem}p{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+    .card{background:linear-gradient(145deg,#1b2940,#121b2b);border:1px solid #ffffff18;border-radius:22px;padding:24px;box-shadow:0 18px 50px #0003}
+    .cat{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:14px;margin-top:12px}
+    .temp{font-size:3.5rem;font-weight:750;letter-spacing:-.06em}.muted{color:var(--muted);font-size:.9rem}
+    footer{margin-top:28px;color:#8190a8;font-size:.82rem}
+  </style>
+</head>
+<body>
+<main>
+  <header><div class="eyebrow">Espace de prévisualisation</div><h1>Une page à part,<br>prête à évoluer.</h1><p>Cette page est hébergée séparément. Son contenu peut être modifié dans le dépôt GitHub, puis publié automatiquement.</p></header>
+  <section class="grid">
+    <article class="card"><div class="eyebrow">Météo · Démo</div><div class="temp" id="temp">—°</div><strong id="condition">Chargement de la météo…</strong><p class="muted" id="place">Rouen, France</p><p class="muted" id="details">Températures et conditions actuelles</p></article>
+    <article class="card"><div class="eyebrow">Pause douceur</div><h2>Un petit compagnon</h2><p class="muted">Une photo de chat pour illustrer cette première interface.</p><img class="cat" src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=1000&q=85" alt="Chat roux et blanc, photo illustrative"></article>
+  </section>
+  <footer>Projet de démonstration · Publication automatique via GitHub Actions</footer>
+</main>
+<script>
+(async()=>{try{
+ const geo=await fetch('https://geocoding-api.open-meteo.com/v1/search?name=Rouen&count=1&language=fr&format=json').then(r=>r.json());
+ const city=geo.results?.[0];if(!city)throw new Error('Lieu indisponible');
+ const data=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}&longitude=${city.longitude}&current=temperature_2m,weather_code&timezone=auto`).then(r=>r.json());
+ const labels={0:'Ciel dégagé',1:'Plutôt dégagé',2:'Partiellement nuageux',3:'Couvert',45:'Brouillard',48:'Brouillard givrant',51:'Bruine légère',53:'Bruine modérée',55:'Bruine dense',61:'Pluie faible',63:'Pluie modérée',65:'Forte pluie',71:'Neige faible',73:'Neige modérée',75:'Forte neige',80:'Averses faibles',81:'Averses modérées',82:'Fortes averses',95:'Orage'};
+ document.querySelector('#temp').textContent=Math.round(data.current.temperature_2m)+'°';
+ document.querySelector('#condition').textContent=labels[data.current.weather_code]||'Conditions variables';
+ document.querySelector('#place').textContent=city.name+', '+(city.country||'');
+ document.querySelector('#details').textContent='Données météo en direct · Open-Meteo';
+}catch(e){document.querySelector('#condition').textContent='Météo momentanément indisponible';document.querySelector('#details').textContent='La page reste accessible.'}})();
+</script>
+</body></html>
