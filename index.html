@@ -24,6 +24,10 @@
     button.equals{background:linear-gradient(135deg,#6fc6f5,#8bd3ff);color:#102033}
     button.zero{grid-column:span 2}
     .hint{text-align:center;color:#8392a9;font-size:.76rem;margin:14px 0 0}
+
+    .weather-card{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:14px;align-items:center;margin:0 0 14px;padding:14px;background:linear-gradient(135deg,#243d59,#17263a);border:1px solid #ffffff20;border-radius:22px;box-shadow:0 14px 38px #0004;overflow:hidden}
+    .weather-copy{min-width:0}.weather-place{font-size:.76rem;color:#b9cbe0;font-weight:650;letter-spacing:.04em}.weather-temp{font-size:2.3rem;line-height:1.1;font-weight:750;letter-spacing:-.06em;margin:4px 0}.weather-desc{font-size:.88rem;color:#e0eaf5}.weather-meta{font-size:.72rem;color:#b4c5d9;margin-top:8px}.weather-cat{width:112px;height:112px;object-fit:cover;border-radius:16px;background:#344b63}.weather-credit{font-size:.65rem;color:#91a5bd;margin-top:5px}
+    @media(max-width:380px){.weather-card{grid-template-columns:minmax(0,1fr) 88px;gap:9px;padding:11px;border-radius:18px}.weather-cat{width:88px;height:88px}.weather-temp{font-size:2rem}}
     /* Téléphones compacts */
     @media(max-width:380px){body{padding:12px}.calculator{padding:13px;border-radius:20px}.keys{gap:7px}button{min-height:52px;border-radius:12px}}
     /* Montres et très petits écrans : priorité aux commandes tactiles */
@@ -31,6 +35,10 @@
       body{padding:env(safe-area-inset-top,6px) 7px env(safe-area-inset-bottom,6px);place-items:center;background:var(--bg)}
       main{width:100%;max-width:230px}
       .intro{margin:0 0 5px}
+      .weather-card{grid-template-columns:minmax(0,1fr) 50px;gap:5px;padding:7px;margin-bottom:7px;border-radius:13px}
+      .weather-cat{width:50px;height:50px;border-radius:9px}
+      .weather-temp{font-size:1.45rem;margin:2px 0}
+      .weather-place{font-size:.62rem}.weather-desc{font-size:.68rem}.weather-meta,.weather-credit{display:none}
       .eyebrow,.intro p,.hint{display:none}
       h1{font-size: .9rem;letter-spacing:0;margin:0 0 4px}
       .calculator{padding:8px;border-radius:18px;box-shadow:none}
@@ -46,6 +54,16 @@
 <body>
 <main>
   <header class="intro"><div class="eyebrow">Outil rapide</div><h1>Mini calculatrice</h1><p>Simple, rapide et toujours à portée de main.</p></header>
+  <section class="weather-card" aria-label="Météo actuelle à Rouen">
+    <div class="weather-copy">
+      <div class="weather-place">MÉTÉO · ROUEN</div>
+      <div class="weather-temp" id="weather-temp">--°</div>
+      <div class="weather-desc" id="weather-desc">Chargement de la météo…</div>
+      <div class="weather-meta" id="weather-meta">Température ressentie et vent en direct</div>
+      <div class="weather-credit">Données météo : Open-Meteo</div>
+    </div>
+    <img class="weather-cat" src="https://cataas.com/cat?width=320&height=320" alt="Portrait d’un chat" loading="lazy">
+  </section>
   <section class="calculator" aria-label="Calculatrice">
     <div class="screen" aria-live="polite"><div id="expression"></div><div id="display">0</div></div>
     <div class="keys">
@@ -61,6 +79,11 @@
 <script>
 (()=>{
  const display=document.querySelector('#display'),expression=document.querySelector('#expression');
+ const weatherText=code=>{if(code===0)return 'Ciel dégagé';if([1,2].includes(code))return 'Peu nuageux';if(code===3)return 'Couvert';if([45,48].includes(code))return 'Brouillard';if([51,53,55,56,57].includes(code))return 'Bruine';if([61,63,65,66,67,80,81,82].includes(code))return 'Pluie';if([71,73,75,77,85,86].includes(code))return 'Neige';if([95,96,99].includes(code))return 'Orages';return 'Conditions variables';};
+ fetch('https://api.open-meteo.com/v1/forecast?latitude=49.4431&longitude=1.0993&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=Europe%2FParis')
+  .then(r=>{if(!r.ok)throw new Error('Météo indisponible');return r.json();})
+  .then(data=>{const w=data.current;document.querySelector('#weather-temp').textContent=Math.round(w.temperature_2m)+'°';document.querySelector('#weather-desc').textContent=weatherText(w.weather_code);document.querySelector('#weather-meta').textContent='Ressenti '+Math.round(w.apparent_temperature)+'° · Vent '+Math.round(w.wind_speed_10m)+' km/h';})
+  .catch(()=>{document.querySelector('#weather-desc').textContent='Météo momentanément indisponible';document.querySelector('#weather-meta').textContent='Réessaie dans un instant';});
  let current='0',stored=null,operator=null,waiting=false,justSolved=false;
  const render=()=>{display.textContent=current;};
  const clean=n=>{if(!Number.isFinite(n))return 'Erreur';return String(Number.parseFloat(n.toPrecision(12)));};
